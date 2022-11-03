@@ -1,0 +1,13 @@
+name: workflow-webhook
+on: repository_dispatch
+jobs:
+  job-webhook:
+    runs-on: ubuntu-latest
+    steps:
+    - name: "step-checkout"
+      uses: actions/checkout@v1
+
+    - name: "step-log"
+      if: github.event.action == 'A'
+      run: |
+        echo "[A] github.ref: ${{github.ref}}"
