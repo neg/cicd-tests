@@ -1,0 +1,16 @@
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Commit from cicd-code repo to test'
+        required: true
+        type: string
+
+jobs:
+  test-the-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Commit: $SHA"
+        env:
+          SHA: ${{ inputs.commit }}
