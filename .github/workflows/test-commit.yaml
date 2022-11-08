@@ -10,7 +10,7 @@ jobs:
   test-the-commit:
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          echo "Commit: $SHA"
+      - name: Mark commit ${{ inputs.commit }} as pending
+        run: echo ./scripts/status --context cicd --url ${{ github.run_id }} $SHA pending
         env:
           SHA: ${{ inputs.commit }}
