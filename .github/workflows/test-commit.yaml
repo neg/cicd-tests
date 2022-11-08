@@ -10,7 +10,11 @@ jobs:
   test-the-commit:
     runs-on: ubuntu-latest
     steps:
-      - name: Mark commit as pending
+      - name: Checkout repository with the test helpers
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Mark commit under test as pending
         env:
           PAT: ${{ secrets.PAT }}
         run: ./scripts/status --runid ${{ github.run_id }} ${{ inputs.commit }} pending
