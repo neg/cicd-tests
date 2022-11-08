@@ -10,7 +10,7 @@ jobs:
   test-the-commit:
     runs-on: ubuntu-latest
     steps:
-      - name: Mark commit ${{ inputs.commit }} as pending
-        run: echo ./scripts/status --context cicd --url ${{ github.run_id }} $SHA pending
+      - name: Mark commit as pending
         env:
-          SHA: ${{ inputs.commit }}
+          PAT: ${{ secrets.PAT }}
+        run: ./scripts/status --runid ${{ github.run_id }} ${{ inputs.commit }} pending

@@ -14,18 +14,23 @@ def set(sha, state, target_url=None, description=None, context=None):
     if context:
         payload["context"] = context
 
-    response = github.post(f"statuses/{sha}", payload)
+    response = github.post('code', f"statuses/{sha}", payload)
 
     return github.check(response, [201])
 
 def main():
-    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser = argparse.ArgumentParser(description='Set the stats of a commit in the code repository')
     parser.add_argument("sha")
-    parser.add_argument("state", metavar='state', choices=['canceled', 'error', 'failure', 'pending', 'success'])
+    parser.add_argument("state", metavar='state', choices=['error', 'failure', 'pending', 'success'])
     parser.add_argument("--url")
     parser.add_argument("--description")
-    parser.add_argument("--context")
+    parser.add_argument("--context", default="cicd")
+    parser.add_argument("--runid")
     args = parser.parse_args()
+
+    if args.runid is not None:
+        config = github.load_config()
+        args.url = f"{config['test']['repo']}/actions/runs/{args.runid}"
 
     return 0 if set(args.sha, args.state, args.url, args.description, args.context) else 1
 

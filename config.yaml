@@ -1,0 +1,6 @@
+code:
+  api: "https://api.github.com/repos/neg/cicd-code"
+  repo: "https://github.com/neg/cicd-code"
+test:
+  api: " https://api.github.com/repos/neg/cicd-tests"
+  repo: "https://github.com/neg/cicd-tests"
