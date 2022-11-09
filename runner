@@ -51,7 +51,6 @@ def main():
     # Get list of commits to test and makr them as pending
     commits = getCommits(args.pr)
     setStateAll(args.runid, commits, "pending")
-    clone(dpdk)
 
     try:
         # TODO: Add check that all tools and permissons are OK

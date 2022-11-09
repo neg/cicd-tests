@@ -9,7 +9,7 @@ import subprocess
 def clone(repo):
     if not os.path.exists(repo):
         os.makedirs(repo)
-        subprocess.run("git init", cwd=repo, shell=True, check=True)
+        subprocess.run("git init --quiet", cwd=repo, shell=True, check=True)
 
     config = github.load_config()
     url = config['code']['repo'].replace("https://", f"https://{config['token']}@")
