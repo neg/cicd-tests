@@ -1,4 +1,4 @@
-#!/usr/bin/python -B
+#!/usr/bin/python -Bu
 
 import argparse
 import os
@@ -34,7 +34,7 @@ def setState(runid, context, commit, state, description):
     cmdline = [cmd, f"--context={context}", f"--description={description}", commit, state]
     if runid:
         cmdline.append(f"--runid={runid}")
-    subprocess.run(cmdline, capture_output=False, check=True)
+    subprocess.run(cmdline, check=True)
 
 def setStateAll(runid, commits, state, description):
     """Helper to set state of all commits, usefull for init and error out"""

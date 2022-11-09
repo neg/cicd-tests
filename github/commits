@@ -1,4 +1,4 @@
-#!/usr/bin/python -B
+#!/usr/bin/python -Bu
 
 import argparse
 import sys
