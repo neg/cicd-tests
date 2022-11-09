@@ -1,8 +1,8 @@
 on:
   workflow_dispatch:
     inputs:
-      commit:
-        description: 'Commit from cicd-code repo to test'
+      pr:
+        description: "PR in code repository to test"
         required: true
         type: string
 
@@ -10,11 +10,11 @@ jobs:
   test-the-commit:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository with the test helpers
+      - name: Checkout test runner repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Mark commit under test as pending
+      - name: Execute test runner
         env:
           PAT: ${{ secrets.PAT }}
-        run: ./scripts/status --runid ${{ github.run_id }} ${{ inputs.commit }} pending
+        run: ./runner --runid ${{ github.run_id }} ${{ inputs.pr }}

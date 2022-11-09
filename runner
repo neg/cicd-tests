@@ -1,0 +1,87 @@
+#!/usr/bin/python -B
+
+import argparse
+import os
+import pathlib
+import subprocess
+import sys
+
+def getCommits(pr):
+    """Generate a list of all commits in the PR"""
+    cmd = os.path.join(pathlib.Path(__file__).parent.absolute(), "scripts/commits")
+    result = subprocess.run([cmd, pr], capture_output=True, text=True, check=True)
+    return list(filter(None, result.stdout.split("\n")))
+
+def setState(runid, context, commit, state, description=None):
+    """Helper to set state of each commit as it progress"""
+    print(f"Set {state} status for {commit} in {context} context")
+
+    cmd = os.path.join(pathlib.Path(__file__).parent.absolute(), "scripts/status")
+    cmdline = [cmd, f"--context={context}", commit, state]
+    if runid:
+        cmdline.append(f"--runid={runid}")
+    if description:
+        cmdline.append(f"--description={description}")
+    subprocess.run(cmdline, capture_output=False, check=True)
+
+def setStateAll(runid, commits, state, description=None):
+    """Helper to set state of all commits, usefull for init and error out"""
+    setState(runid, "dts", commits[-1], state, description)
+    for commit in commits:
+        setState(runid, "compile", commit, state, description)
+
+def clone(location):
+    """Helper to clone the code using PAT, while also keeping the PAT secret"""
+    cmd = os.path.join(pathlib.Path(__file__).parent.absolute(), "scripts/clone")
+    subprocess.run([cmd, location], text=True, check=True)
+
+def bakka():
+    subprocess.run(['pwd'], text=True, check=True)
+    subprocess.run(['ls'], text=True, check=True)
+
+def main():
+    bakka()
+    dpdk = os.path.join(pathlib.Path(__file__).parent.absolute(), "dpdk")
+
+    parser = argparse.ArgumentParser(description='Entry point for test of PR')
+    parser.add_argument("pr")
+    parser.add_argument("--runid")
+    args = parser.parse_args()
+
+    # Get list of commits to test and makr them as pending
+    commits = getCommits(args.pr)
+    setStateAll(args.runid, commits, "pending")
+    clone(dpdk)
+
+    try:
+        # TODO: Add check that all tools and permissons are OK
+
+        # TODO: Setup build enviorment (CCACHE)
+
+        # Clone the code
+        clone(dpdk)
+    except:
+        setStateAll(args.runid, commits, "error", "Bad runner execution environment")
+        return 1
+
+    try:
+        # TODO: Baseline checkout + build
+        pass
+    except:
+        setStateAll(args.runid, commits, "error", "Can not build baseline")
+        return 1
+
+    for commit in commits:
+        # TODO: For each commit build and static tests and update compile status for each
+        pass
+
+    # TODO: Run DTS on head and set status on head commit
+
+    setStateAll(args.runid, commits, "failure", "Need more work")
+
+    bakka()
+
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())

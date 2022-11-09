@@ -1,0 +1,26 @@
+#!/usr/bin/python -B
+
+import argparse
+import sys
+
+import github
+
+def list(pr):
+    response = github.get('code', f"pulls/{pr}/commits")
+    if not github.check(response, [200]):
+        return False
+
+    for commit in response.json():
+        print(commit['sha'])
+
+    return True
+
+def main():
+    parser = argparse.ArgumentParser(description='List commits in a PR')
+    parser.add_argument("pr")
+    args = parser.parse_args()
+
+    return 0 if list(args.pr) else 1
+
+if __name__ == '__main__':
+    sys.exit(main())

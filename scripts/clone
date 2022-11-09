@@ -1,0 +1,27 @@
+#!/usr/bin/python -B
+
+import argparse
+import github
+import sys
+import os
+import subprocess
+
+def clone(repo):
+    if not os.path.exists(repo):
+        os.makedirs(repo)
+        subprocess.run("git init", cwd=repo, shell=True, check=True)
+
+    config = github.load_config()
+    url = config['code']['repo'].replace("https://", f"https://{config['token']}@")
+
+    return subprocess.run(f"git fetch --prune {url} 'refs/heads/*:refs/heads/*'", cwd=repo, shell=True, check=False).returncode == 0
+
+def main():
+    parser = argparse.ArgumentParser(description='Set the stats of a commit in the code repository')
+    parser.add_argument("location")
+    args = parser.parse_args()
+
+    return 0 if clone(args.location) else 1
+
+if __name__ == '__main__':
+    sys.exit(main())
