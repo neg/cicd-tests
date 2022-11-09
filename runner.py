@@ -13,11 +13,10 @@ def banner(msg):
     print(f"=" * (len(msg) + 6))
 
 def section(msg):
-    print(f"\n* {msg}")
+    print(f"* {msg}")
 
 #
 # Helpers to interact with GitHub using the secure PAT token
-# NOTE; Raise an exception on fail.
 # NOTE: Make sure anything logged do not print the environment which may contain the PAT
 #
 def getCommits(pr):
@@ -45,7 +44,7 @@ def setStateAll(runid, commits, state, description):
 def clone(location):
     """Helper to clone the code using PAT, while also keeping the PAT secret"""
     cmd = os.path.join(pathlib.Path(__file__).parent.absolute(), "github/clone")
-    subprocess.run([cmd, location], text=True, check=True)
+    return subprocess.run([cmd, location], text=True).returncode == 0
 
 #
 # = Wrappers for calling check scripts
@@ -79,17 +78,10 @@ def main():
     setStateAll(args.runid, commits, "pending", "Waiting")
 
     banner("Setup test execution environment and build baseline")
-    try:
-        # TODO: Add check that all tools and permissons are OK for runtime checks
-        # TODO: Setup build enviorment (CCACHE)
-        clone(dpdk)
-    except:
-        setStateAll(args.runid, commits, "error", "Bad runner execution environment")
-        return 1
-
-    section("Build baseline, so only build errors from PR is checked")
-    if not build(dpdk, f"{commits[0]}~1", True):
-        setStateAll(args.runid, commits, "error", "Can not build baseline")
+    # TODO: Add check that all tools and permissons are OK for runtime checks
+    # TODO: Setup build enviorment (CCACHE)
+    if not clone(dpdk) or not build(dpdk, f"{commits[0]}~1", True):
+        setStateAll(args.runid, commits, "error", "Can not clone or build baseline")
         return 1
 
     banner("Compile and run static checks for each commit in PR")
