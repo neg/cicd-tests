@@ -14,7 +14,7 @@ def clone(repo):
     config = github.load_config()
     url = config['code']['repo'].replace("https://", f"https://{config['token']}@")
 
-    return subprocess.run(f"git fetch --prune {url} 'refs/heads/*:refs/heads/*'", cwd=repo, shell=True, check=False).returncode == 0
+    return subprocess.run(f"git fetch --force --prune {url} 'refs/heads/*:refs/heads/*'", cwd=repo, shell=True, check=False).returncode == 0
 
 def main():
     parser = argparse.ArgumentParser(description='Set the stats of a commit in the code repository')

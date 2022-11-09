@@ -6,6 +6,11 @@ import pathlib
 import subprocess
 import sys
 
+#
+# Helpers to interact with GitHub using the secure PAT token
+# NOTE; Raise an exception on fail.
+# NOTE: Make sure anything logged do not print the environment which may contain the PAT
+#
 def getCommits(pr):
     """Generate a list of all commits in the PR"""
     cmd = os.path.join(pathlib.Path(__file__).parent.absolute(), "scripts/commits")
@@ -28,21 +33,43 @@ def setStateAll(runid, commits, state, description=None):
     """Helper to set state of all commits, usefull for init and error out"""
     setState(runid, "dts", commits[-1], state, description)
     for commit in commits:
-        setState(runid, "compile", commit, state, description)
+        setState(runid, "build", commit, state, description)
 
 def clone(location):
     """Helper to clone the code using PAT, while also keeping the PAT secret"""
     cmd = os.path.join(pathlib.Path(__file__).parent.absolute(), "scripts/clone")
     subprocess.run([cmd, location], text=True, check=True)
 
-def bakka():
-    subprocess.run(['pwd'], text=True, check=True)
-    subprocess.run(['ls'], text=True, check=True)
+#
+# = Wrappers for calling test scripts
+# NOTE: Return True/False on Pass/Fail
+#
+def banner(msg):
+    print("")
+    print(f"=" * (len(msg) + 6))
+    print(f"= {msg} =")
+    print(f"=" * (len(msg) + 6))
+
+def section(msg):
+    print(f"\n* {msg}")
+
+def build(location, commit):
+    section(f"Building {commit}")
+    cmd = os.path.join(pathlib.Path(__file__).parent.absolute(), "build.sh")
+    return subprocess.run([cmd, location, commit], text=True).returncode == 0
+
+def static(location):
+    section(f"Running static checks on HEAD")
+    cmd = os.path.join(pathlib.Path(__file__).parent.absolute(), "static.sh")
+    return subprocess.run([cmd, location], text=True).returncode == 0
+
+def runtime(location):
+    section(f"Running runtime checks on HEAD")
+    cmd = os.path.join(pathlib.Path(__file__).parent.absolute(), "runtime.sh")
+    return subprocess.run([cmd, location], text=True).returncode == 0
 
 def main():
-    bakka()
     dpdk = os.path.join(pathlib.Path(__file__).parent.absolute(), "dpdk")
-
     parser = argparse.ArgumentParser(description='Entry point for test of PR')
     parser.add_argument("pr")
     parser.add_argument("--runid")
@@ -52,33 +79,40 @@ def main():
     commits = getCommits(args.pr)
     setStateAll(args.runid, commits, "pending")
 
+    # Make sure execution enviroment is good and clone the code
     try:
-        # TODO: Add check that all tools and permissons are OK
-
+        # TODO: Add check that all tools and permissons are OK for runtime checks
         # TODO: Setup build enviorment (CCACHE)
-
-        # Clone the code
         clone(dpdk)
     except:
         setStateAll(args.runid, commits, "error", "Bad runner execution environment")
         return 1
 
-    try:
-        # TODO: Baseline checkout + build
-        pass
-    except:
+    # Checkout and build commit before first commit to create a baseline
+    if not build(dpdk, f"{commits[0]}~1"):
         setStateAll(args.runid, commits, "error", "Can not build baseline")
         return 1
 
+    banner("Compile and run static checks for each commit in PR")
+    badcommit = False
     for commit in commits:
-        # TODO: For each commit build and static tests and update compile status for each
-        pass
+        if not build(dpdk, commit) or not static(dpdk):
+            setState(args.runid, "build", commit, "failure", "Commit failed to build or static checks")
+            badcommit = True
+            continue
 
-    # TODO: Run DTS on head and set status on head commit
+        setState(args.runid, "build", commit, "success")
 
-    setStateAll(args.runid, commits, "failure", "Need more work")
+    banner("Run runtime checks on top-commit, if all commits was good")
+    if badcommit:
+        setState(args.runid, "dts", commits[-1], "error", "One or more commits failed build or static checks, will not try runtime checks")
+        return 1
 
-    bakka()
+    if not runtime(dpdk):
+        setState(args.runid, "dts", commits[-1], "failure", "PR failed runtime checks")
+        return 1
+
+    setState(args.runid, "dts", commits[-1], "success")
 
     return 0
 
