@@ -7,7 +7,7 @@ import yaml
 
 def load_config():
     def load_yaml(file):
-        path = os.path.join(pathlib.Path(__file__).parent.parent.absolute(), file)
+        path = os.path.join(pathlib.Path(__file__).parent.absolute(), file)
         if os.path.isfile(path):
             with open(path, "r") as stream:
                 return yaml.safe_load(stream)

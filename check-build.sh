@@ -1,10 +1,18 @@
 #!/bin/bash
 
 run() {
-    local -r name=$1
+    local name=$1
     shift
-    local -r targets=$1
+    local targets=$1
     shift
+    local isbaseline=$1
+    shift
+
+    local ninjaopt=""
+    if [[ "$isbaseline" == "yes" ]]; then
+        ninjaopt="--quiet"
+        rm -fr build/$name
+    fi
 
     if [ ! -d build/$name ]; then
         if ! meson setup -Denable_kmods=false $* build/$name; then
@@ -13,13 +21,14 @@ run() {
         fi
     fi
 
-    ninja -C build/$name $targets
+    ninja $ninjaopt -C build/$name $targets
 }
 
 set -euo pipefail
 
 readonly repo=$1
 readonly commit=$2
+readonly baseline=$3
 
 cd $repo
 
@@ -27,4 +36,4 @@ cd $repo
 git checkout --quiet $commit
 
 # Build using default compiler
-run normal all
+run normal all $baseline

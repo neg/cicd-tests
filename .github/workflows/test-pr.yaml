@@ -17,4 +17,4 @@ jobs:
       - name: Execute test runner
         env:
           PAT: ${{ secrets.PAT }}
-        run: ./runner --runid ${{ github.run_id }} ${{ inputs.pr }}
+        run: ./runner.py --runid ${{ github.run_id }} ${{ inputs.pr }}
